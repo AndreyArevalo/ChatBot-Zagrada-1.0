@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Herramientas necesarias para compilar better-sqlite3
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -9,4 +12,4 @@ COPY . .
 
 RUN mkdir -p /app/auth_info_baileys /app/data
 
-CMD ["npm", "run", "dev"]
+CMD ["node", "src/index.js"]
