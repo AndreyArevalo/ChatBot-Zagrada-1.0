@@ -1,0 +1,11 @@
+services:
+  zagrada-bot:
+    build: .
+    container_name: zagrada-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./auth_info_baileys:/app/auth_info_baileys
+      - ./data:/app/data
+    command: npm run dev
