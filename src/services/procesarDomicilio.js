@@ -1,11 +1,11 @@
-const { db, siguienteId } = require("../db/database");
+const { db, siguienteIdDiario } = require("../db/database");
 
 function procesarDomicilio({ telefono, jid, data }) {
   const pedidoItems = Array.isArray(data.pedidoItems) ? data.pedidoItems : [];
   const pedidoTexto = pedidoItems.join(" | ");
   const formaPago = String(data.formaPago || "").trim().toLowerCase();
 
-  const idDomicilio = siguienteId("domicilios");
+  const idDomicilio = siguienteIdDiario("domicilios");
   db.prepare(`
     INSERT INTO domicilios
     (
