@@ -1,11 +1,13 @@
-const db = require("../db/database");
+const { db, siguienteId } = require("../db/database");
 
 function procesarReserva({ telefono, jid, data }) {
-  const resultadoReserva = db.prepare(
+  const idReserva = siguienteId("reservas");
+  db.prepare(
     "INSERT INTO reservas " +
-    "(nombre, telefono, jid_cliente, zona, fecha, fecha_texto, hora, personas, decoracion, observaciones, observaciones_admin) " +
-    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "(id, nombre, telefono, jid_cliente, zona, fecha, fecha_texto, hora, personas, decoracion, observaciones, observaciones_admin) " +
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
+    idReserva,
     data.nombre,
     telefono,
     jid,
@@ -18,8 +20,6 @@ function procesarReserva({ telefono, jid, data }) {
     data.observaciones || null,
     data.observaciones || null
   );
-
-  const idReserva = resultadoReserva.lastInsertRowid;
   const nl = "\n";
 
   const textoCliente =

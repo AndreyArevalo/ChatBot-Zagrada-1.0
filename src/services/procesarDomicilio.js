@@ -1,13 +1,15 @@
-const db = require("../db/database");
+const { db, siguienteId } = require("../db/database");
 
 function procesarDomicilio({ telefono, jid, data }) {
   const pedidoItems = Array.isArray(data.pedidoItems) ? data.pedidoItems : [];
   const pedidoTexto = pedidoItems.join(" | ");
   const formaPago = String(data.formaPago || "").trim().toLowerCase();
 
-  const resultadoDomicilio = db.prepare(`
+  const idDomicilio = siguienteId("domicilios");
+  db.prepare(`
     INSERT INTO domicilios
     (
+      id,
       nombre,
       telefono,
       jid_cliente,
@@ -18,8 +20,9 @@ function procesarDomicilio({ telefono, jid, data }) {
       pedido,
       fecha_servicio
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
+    idDomicilio,
     data.nombre,
     telefono,
     jid,
@@ -55,7 +58,7 @@ function procesarDomicilio({ telefono, jid, data }) {
     bloqueMediosPago;
 
   const textoAdmin =
-    "\u{1F6F5} Nuevo domicilio #" + resultadoDomicilio.lastInsertRowid + saltoLinea + saltoLinea +
+    "\u{1F6F5} Nuevo domicilio #" + idDomicilio + saltoLinea + saltoLinea +
     "\u{1F464} Nombre: " + data.nombre + saltoLinea +
     "\u{1F4DE} ID cliente: " + telefono + saltoLinea +
     "\u{1F4DE} Contacto: " + (data.contacto || telefono) + saltoLinea +
@@ -66,8 +69,8 @@ function procesarDomicilio({ telefono, jid, data }) {
     "- " + listaItems + saltoLinea + saltoLinea +
     "Estado: pendiente" + saltoLinea + saltoLinea +
     "Comandos:" + saltoLinea +
-    "- confirmar domicilio " + resultadoDomicilio.lastInsertRowid + saltoLinea +
-    "- rechazar domicilio " + resultadoDomicilio.lastInsertRowid;
+    "- confirmar domicilio " + idDomicilio + saltoLinea +
+    "- rechazar domicilio " + idDomicilio;
 
   return {
     textoCliente,

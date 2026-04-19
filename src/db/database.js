@@ -121,4 +121,17 @@ db.prepare(`
   VALUES (?, ?)
 `).run("domicilios_reapertura", "");
 
-module.exports = db;
+// ─── IDs ciclicos 1-999 ───────────────────────────────────────────────────────
+function siguienteId(tabla) {
+  const row = db.prepare(`SELECT MAX(id) as maxId FROM ${tabla}`).get();
+  const maxId = row?.maxId || 0;
+  if (maxId < 999) return maxId + 1;
+  // Llegó a 999: busca el menor ID libre desde 1
+  for (let i = 1; i <= 999; i++) {
+    const existe = db.prepare(`SELECT 1 FROM ${tabla} WHERE id = ?`).get(i);
+    if (!existe) return i;
+  }
+  return maxId + 1; // fallback por si los 999 están ocupados
+}
+
+module.exports = { db, siguienteId };

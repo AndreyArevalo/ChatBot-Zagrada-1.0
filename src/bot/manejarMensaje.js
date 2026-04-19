@@ -1,6 +1,6 @@
 const path = require("path");
 const { preguntarIA } = require("../services/ia");
-const db = require("../db/database");
+const { db } = require("../db/database");
 const {
   obtenerSesion,
   actualizarSesion,
