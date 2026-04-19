@@ -39,8 +39,8 @@ docker-data/
 # WhatsApp session (credenciales sensibles)
 auth_info_baileys/
 
-# Base de datos local
-data/
+# Base de datos local (raíz)
+/data/
 *.db
 *.sqlite
 
