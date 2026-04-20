@@ -342,7 +342,8 @@ function extraerFormularioReserva(texto) {
   const zona = extraerValorEtiqueta(texto, ["UBICACI\u00d3N", "UBICACION"]);
   const nombre = extraerValorEtiqueta(texto, ["NOMBRE"]);
   const celular = extraerValorEtiqueta(texto, ["CELULAR", "CONTACTO"]);
-  const menu = extraerValorEtiqueta(texto, ["MEN\u00da", "MENU", "OBSERVACIONES", "OBSERVACION"]);
+  const observaciones = extraerValorEtiqueta(texto, ["OBSERVACIONES", "OBSERVACION"]);
+  const menuReserva = extraerValorEtiqueta(texto, ["MEN\u00da", "MENU"]);
   return {
     fecha_texto: fecha || null,
     hora: hora || null,
@@ -350,7 +351,8 @@ function extraerFormularioReserva(texto) {
     zona: zona || null,
     nombre: nombre || null,
     celular: celular || null,
-    observaciones: menu || null
+    observaciones: observaciones || null,
+    menu_reserva: menuReserva || null
   };
 }
 
@@ -704,6 +706,43 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
         return "Perfecto, no la guardar\u00e9 todav\u00eda.\n\nEscr\u00edbeme el dato que deseas corregir. Por ejemplo:\n- cambiar hora a 7 pm\n- somos 6 personas\n- nombre Sebastian\n- quiero decoraci\u00f3n\n- cambiar observaciones";
       }
       return "Por favor resp\u00f3ndeme:\n- s\u00ed\n- no";
+    }
+
+    if (pasoInternoReserva === "corrigiendo_reserva") {
+      // Aplicar correcciones sin pasar por IA (evita sobreescribir campos)
+      const corrs = {};
+      // Hora directa
+      const { validarHoraReserva } = require("../validators/reserva");
+      const mHora = textoPlano.match(/(?:cambiar?\s+hora\s+(?:a\s+)?|hora[:\s]+|la\s+hora\s+(?:es\s+)?)(.+)/i);
+      if (mHora) { const vh = validarHoraReserva(mHora[1].trim()); if (vh.valido) corrs.hora = vh.valorNormalizado; }
+      if (!corrs.hora) { const vh2 = validarHoraReserva(textoPlano.trim()); if (vh2.valido) corrs.hora = vh2.valorNormalizado; }
+      // Personas
+      const { validarCantidadPersonas } = require("../validators/reserva");
+      const mPers = textoPlano.match(/(?:somos\s+|para\s+|cambiar\s+(?:a\s+)?)?([1-9]\d?)\s*(?:personas|asistentes|pax)/i);
+      if (mPers) { const vp = validarCantidadPersonas(mPers[1]); if (vp.valido) corrs.personas = vp.valorNormalizado; }
+      // Zona
+      const zonaCorr = normalizarZona(textoPlano);
+      if (zonaCorr) corrs.zona = zonaCorr;
+      // Decoracion
+      const planCorr = obtenerPlanDecoracion(textoPlano, true);
+      if (planCorr) { corrs.decoracion = planCorr; corrs.decoracionDecidida = true; }
+      if (texto.includes("sin decorac") || texto === "no decorac") { corrs.decoracion = null; corrs.decoracionDecidida = true; }
+      // Nombre
+      const mNombre = textoPlano.match(/(?:nombre\s+(?:a\s+)?|a\s+nombre\s+de\s+|cambiar\s+nombre\s+(?:a\s+)?)([a-zA-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00e1\u00e9\u00ed\u00f3\u00fa\u00d1\u00f1 ]{2,})/i);
+      if (mNombre) corrs.nombre = mNombre[1].trim();
+      // Observaciones
+      if (texto.includes("observaci")) { corrs.observaciones = esRespuestaNegativa(texto) ? null : textoPlano; }
+      // Menu
+      if (texto.includes("menu") || texto.includes("men\u00fa") || texto.includes("plato")) {
+        actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { ...sesion.data, pasoInternoReserva: "preguntando_menu" } });
+        return "\u00bfYa tienen pensado los platos o el men\u00fa? \ud83c\udf7d\ufe0f\n\nPuedes indicarlos aqu\u00ed, o escribe *no* si los eligen en el restaurante.";
+      }
+      if (Object.keys(corrs).length > 0) {
+        const datosCorr = { ...sesion.data, ...corrs, pasoInternoReserva: "confirmando_reserva" };
+        actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: datosCorr });
+        return crearResumenReserva(datosCorr);
+      }
+      return "No logr\u00e9 identificar qu\u00e9 dato corregir \ud83e\udd14\n\nEscr\u00edbeme por ejemplo:\n- *cambiar hora a 7 pm*\n- *somos 4 personas*\n- *nombre Andrea*\n- *terraza* o *sal\u00f3n*\n- *decoraci\u00f3n*\n- *cambiar observaciones*";
     }
 
     if (datosFusionados.hora) {

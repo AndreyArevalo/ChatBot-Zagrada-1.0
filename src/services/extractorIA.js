@@ -56,7 +56,7 @@ Reglas:
 - "UBICACIÓN" debe mapearse a "zona".
 - "N° ASISTENTES" debe mapearse a "personas".
 - "NOMBRE" debe mapearse a "nombre".
-- "MENÚ" debe mapearse a "observaciones".
+- "MENÚ" debe mapearse a "menu_reserva" (NO a "observaciones").
 - "CELULAR" puede ignorarse si ya existe el número del chat.
 - Si el cliente escribe "Salón principal", normalízalo en "zona" como "Salón principal".
 - No inventes datos.
@@ -89,6 +89,7 @@ Formato exacto:
     "nombre": null,
     "decoracion": null,
     "observaciones": null,
+    "menu_reserva": null,
     "direccion": null,
     "contacto": null,
     "formaPago": null,
