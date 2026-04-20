@@ -442,6 +442,13 @@ function enriquecerDatosReservaDesdeTexto(mensaje, sesion, datos = {}) {
       enriquecidos.celular = rawSinEspacios;
     }
   }
+  // Celular: numero de telefono enviado como respuesta directa
+  if (!enriquecidos.celular) {
+    const rawSinEspacios = raw.replace(/[\s\-]/g, "");
+    if (/^3\d{9}$/.test(rawSinEspacios)) {
+      enriquecidos.celular = rawSinEspacios;
+    }
+  }
   const plan = normalizarDecoracionLocal(raw);
   if (plan) { enriquecidos.decoracion = plan; enriquecidos.decoracionDecidida = true; }
   if (lower.includes("sin decoracion") || lower.includes("sin decoraci\u00f3n")) { enriquecidos.decoracion = null; enriquecidos.decoracionDecidida = true; }
@@ -500,10 +507,6 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
   }
 
   if (esSolicitudReservaDirecta(texto) && sesion.paso !== "flujo_ia_reserva") {
-    const cierreReserva = verificarCierreRestaurante();
-    if (cierreReserva.cerrado) {
-      return cierreReserva.tipo === "lunes" ? mensajeLunesCerrado() : mensajeRestauranteCerrado();
-    }
     actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" } });
     return crearFormularioReservaTexto(telefono);
   }
@@ -546,8 +549,6 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
   }
 
   if (texto === "1" || texto === "reservar" || texto === "reserva" || texto === "reservar mesa") {
-    const cierreOp1 = verificarCierreRestaurante();
-    if (cierreOp1.cerrado) return cierreOp1.tipo === "lunes" ? mensajeLunesCerrado() : mensajeRestauranteCerrado();
     actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" } });
     return crearFormularioReservaTexto(telefono);
   }
@@ -610,6 +611,11 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
     const datosFormulario = extraerFormularioReserva(textoPlano);
     datosExtraidos = { ...datosExtraidos, ...limpiarDatosExtraidos(datosFormulario) };
     // Si la IA puso el teléfono en contacto, mapearlo a celular
+    if (datosExtraidos.contacto && !datosExtraidos.celular) {
+      datosExtraidos.celular = datosExtraidos.contacto;
+      delete datosExtraidos.contacto;
+    }
+    // Si la IA puso el telefono en contacto, mapearlo a celular
     if (datosExtraidos.contacto && !datosExtraidos.celular) {
       datosExtraidos.celular = datosExtraidos.contacto;
       delete datosExtraidos.contacto;
