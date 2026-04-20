@@ -39,6 +39,10 @@ function procesarReserva({ telefono, jid, data }) {
     "Muchas gracias\u{1F917}" + nl + nl +
     "Si deseas volver al men\u00fa, escribe *menu*.";
 
+  const lineaDecoracion = data.decoracion ? "\u{1F389} Decoraci\u00f3n: Plan " + data.decoracion + nl : "";
+  const lineaObservaciones = data.observaciones ? "\u{1F4DD} Observaciones: " + data.observaciones + nl : "";
+  const lineaMenu = data.menu_reserva ? "\u{1F37D}\uFE0F Men\u00fa: " + data.menu_reserva + nl : "";
+
   const textoAdmin =
     "\u{1F4CC} Nueva reserva #" + idReserva + nl + nl +
     "\u{1F464} Nombre: " + data.nombre + nl +
@@ -47,8 +51,10 @@ function procesarReserva({ telefono, jid, data }) {
     "\u{1F4C5} Fecha: " + data.fecha_iso + nl +
     "\u{1F552} Hora: " + data.hora + nl +
     "\u{1F465} N\u00b0 Asistentes: " + data.personas + nl +
-    "\u{1F389} Decoraci\u00f3n: " + (data.decoracion ? "Plan " + data.decoracion : "No") + nl +
-    "\u{1F4DD} Men\u00fa / Observaciones: " + (data.observaciones || "Ninguna") + nl + nl +
+    lineaDecoracion +
+    lineaObservaciones +
+    lineaMenu +
+    nl +
     "Comandos:" + nl +
     "- confirmar " + idReserva + nl +
     "- rechazar " + idReserva + nl +
