@@ -517,16 +517,20 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
   }
 
   if (esSolicitudReservaDirecta(texto) && sesion.paso !== "flujo_ia_reserva") {
-    const datosFormularioInicial = extraerFormularioReserva(textoPlano);
-    const camposFormulario = Object.values(datosFormularioInicial).filter(v => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
-    const yaTraeDatosFormulario = camposFormulario.length >= 2;
-    actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" } });
+    // Detectar si el mensaje ya trae datos del formulario (busca al menos FECHA: y HORA: o 3+ líneas con "clave: valor")
+    const lineasConClave = textoPlano.split(/\r?\n/).filter(l => {
+      const i = l.indexOf(":");
+      return i > 0 && i < l.length - 1 && l.slice(0, i).replace(/[\s\-\u2022*\u00b7\u25aa\u25e6\u25cf\u25cb\u25c6\u25c7\u30fb◆◇]/g, "").length > 0;
+    });
+    const yaTraeDatosFormulario = lineasConClave.length >= 3 || (/fecha:/i.test(textoPlano) && /hora:/i.test(textoPlano));
     if (!yaTraeDatosFormulario) {
+      actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" } });
       return crearFormularioReservaTexto(telefono);
     }
-    // El mensaje ya trae datos del formulario — actualizamos sesion en memoria y dejamos caer al procesamiento IA
+    // El mensaje ya trae datos del formulario — seteamos sesión y procesamos directo
+    actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false } });
     sesion.paso = "flujo_ia_reserva";
-    sesion.data = { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" };
+    sesion.data = { decoracionDecidida: false };
   }
 
   if (esSolicitudDomicilioDirecta(texto) && sesion.paso !== "flujo_ia_domicilio") {
