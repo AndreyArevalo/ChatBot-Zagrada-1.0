@@ -517,8 +517,16 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
   }
 
   if (esSolicitudReservaDirecta(texto) && sesion.paso !== "flujo_ia_reserva") {
+    const datosFormularioInicial = extraerFormularioReserva(textoPlano);
+    const camposFormulario = Object.values(datosFormularioInicial).filter(v => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
+    const yaTraeDatosFormulario = camposFormulario.length >= 2;
     actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" } });
-    return crearFormularioReservaTexto(telefono);
+    if (!yaTraeDatosFormulario) {
+      return crearFormularioReservaTexto(telefono);
+    }
+    // El mensaje ya trae datos del formulario — actualizamos sesion en memoria y dejamos caer al procesamiento IA
+    sesion.paso = "flujo_ia_reserva";
+    sesion.data = { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" };
   }
 
   if (esSolicitudDomicilioDirecta(texto) && sesion.paso !== "flujo_ia_domicilio") {
