@@ -335,13 +335,21 @@ function extraerValorEtiqueta(texto, etiquetas) {
   return null;
 }
 
+function extraerNombreDeEncabezado(texto) {
+  const primeraLinea = String(texto || "").split(/\r?\n/)[0] || "";
+  // Captura: "Hola, soy Andrey." o "Hola soy andrey quiero reservar..."
+  const match = primeraLinea.match(/hola[,\s]+soy\s+([A-Za-záéíóúÁÉÍÓÚñÑ]+)/i);
+  if (match) return match[1].trim();
+  return null;
+}
+
 function extraerFormularioReserva(texto) {
   const fecha = extraerValorEtiqueta(texto, ["FECHA"]);
   const hora = extraerValorEtiqueta(texto, ["HORA"]);
-  const personas = extraerValorEtiqueta(texto, ["N\u00b0 ASISTENTES", "N\u00ba ASISTENTES", "ASISTENTES"]);
+  const personas = extraerValorEtiqueta(texto, ["N\u00b0 ASISTENTES", "N\u00ba ASISTENTES", "ASISTENTES", "PERSONAS"]);
   const zona = extraerValorEtiqueta(texto, ["UBICACI\u00d3N", "UBICACION"]);
-  const nombre = extraerValorEtiqueta(texto, ["NOMBRE"]);
-  const celular = extraerValorEtiqueta(texto, ["CELULAR", "CONTACTO"]);
+  const nombre = extraerValorEtiqueta(texto, ["NOMBRE"]) || extraerNombreDeEncabezado(texto);
+  const celular = extraerValorEtiqueta(texto, ["CELULAR", "CONTACTO", "TEL\u00c9FONO", "TELEFONO"]);
   const observaciones = extraerValorEtiqueta(texto, ["OBSERVACIONES", "OBSERVACION"]);
   const menuReserva = extraerValorEtiqueta(texto, ["MEN\u00da", "MENU"]);
   return {
