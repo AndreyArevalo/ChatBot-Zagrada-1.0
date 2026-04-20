@@ -517,20 +517,12 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
   }
 
   if (esSolicitudReservaDirecta(texto) && sesion.paso !== "flujo_ia_reserva") {
-    // Detectar si el mensaje ya trae datos del formulario (busca al menos FECHA: y HORA: o 3+ líneas con "clave: valor")
-    const lineasConClave = textoPlano.split(/\r?\n/).filter(l => {
-      const i = l.indexOf(":");
-      return i > 0 && i < l.length - 1 && l.slice(0, i).replace(/[\s\-\u2022*\u00b7\u25aa\u25e6\u25cf\u25cb\u25c6\u25c7\u30fb◆◇]/g, "").length > 0;
-    });
-    const yaTraeDatosFormulario = lineasConClave.length >= 3 || (/fecha:/i.test(textoPlano) && /hora:/i.test(textoPlano));
-    if (!yaTraeDatosFormulario) {
-      actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" } });
-      return crearFormularioReservaTexto(telefono);
-    }
-    // El mensaje ya trae datos del formulario — seteamos sesión y procesamos directo
-    actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false } });
+    // Siempre seteamos sesión y caemos al procesamiento IA.
+    // Si el mensaje trae datos (mañana, 7pm, nombre, formulario...) la IA los extrae y pregunta solo lo que falta.
+    // Si el mensaje no trae nada útil, el check noHayDatosReservaDetectados (más abajo) mostrará el formulario.
+    actualizarSesion(telefono, { paso: "flujo_ia_reserva", data: { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" } });
     sesion.paso = "flujo_ia_reserva";
-    sesion.data = { decoracionDecidida: false };
+    sesion.data = { decoracionDecidida: false, pasoInternoReserva: "esperando_formulario_reserva" };
   }
 
   if (esSolicitudDomicilioDirecta(texto) && sesion.paso !== "flujo_ia_domicilio") {
