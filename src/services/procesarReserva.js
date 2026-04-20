@@ -4,8 +4,8 @@ function procesarReserva({ telefono, jid, data }) {
   const idReserva = siguienteId("reservas");
   db.prepare(
     "INSERT INTO reservas " +
-    "(id, nombre, telefono, jid_cliente, zona, fecha, fecha_texto, hora, personas, decoracion, observaciones, observaciones_admin) " +
-    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "(id, nombre, telefono, jid_cliente, zona, fecha, fecha_texto, hora, personas, decoracion, observaciones, observaciones_admin, celular) " +
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     idReserva,
     data.nombre,
@@ -18,7 +18,8 @@ function procesarReserva({ telefono, jid, data }) {
     data.personas,
     data.decoracion || null,
     data.observaciones || null,
-    data.observaciones || null
+    data.observaciones || null,
+    data.celular || null
   );
   const nl = "\n";
 
@@ -41,7 +42,7 @@ function procesarReserva({ telefono, jid, data }) {
   const textoAdmin =
     "\u{1F4CC} Nueva reserva #" + idReserva + nl + nl +
     "\u{1F464} Nombre: " + data.nombre + nl +
-    "\u{1F4DE} ID cliente: " + telefono + nl +
+    "\u{1F4DE} Celular: " + (data.celular || telefono) + nl +
     "\u{1F4CD} Ubicaci\u00f3n: " + data.zona + nl +
     "\u{1F4C5} Fecha: " + data.fecha_iso + nl +
     "\u{1F552} Hora: " + data.hora + nl +

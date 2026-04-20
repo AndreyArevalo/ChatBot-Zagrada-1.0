@@ -85,6 +85,10 @@ try {
   db.prepare(`ALTER TABLE reservas ADD COLUMN observaciones TEXT`).run();
 } catch (error) {}
 
+try {
+  db.prepare(`ALTER TABLE reservas ADD COLUMN celular TEXT`).run();
+} catch (error) {}
+
 // Configuración inicial
 db.prepare(`
   INSERT OR IGNORE INTO configuracion (clave, valor)

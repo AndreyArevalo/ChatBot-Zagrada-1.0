@@ -6,6 +6,7 @@ function calcularFaltantesReserva(data = {}) {
   if (!data.hora) faltantes.push("hora");
   if (!data.personas) faltantes.push("personas");
   if (!data.nombre) faltantes.push("nombre");
+  if (!data.celular) faltantes.push("celular");
 
   return faltantes;
 }
@@ -41,6 +42,9 @@ function preguntaPorFaltante(tipo, faltante, data = {}) {
     if (faltante === "nombre") {
       return "Perfecto. \u00bfA nombre de qui\u00e9n quedar\u00e1 la reserva?";
     }
+    if (faltante === "celular") {
+      return "Perfecto. \u00bfCu\u00e1l es tu n\u00famero de celular para contactarte?";
+    }
   }
 
   if (tipo === "domicilio") {
@@ -74,6 +78,7 @@ function preguntaObservacionesDomicilio() {
 
 function crearResumenReserva(data = {}) {
   return "Por favor revisa tu reserva:\n\n\ud83d\udc64 Nombre: " + (data.nombre || "No definido") +
+    "\n\ud83d\udcde Celular: " + (data.celular || "No definido") +
     "\n\ud83d\udccd Ubicaci\u00f3n: " + (data.zona || "No definida") +
     "\n\ud83d\udcc5 Fecha: " + (data.fecha_iso || "No definida") +
     "\n\ud83d\udd52 Hora: " + (data.hora || "No definida") +

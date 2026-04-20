@@ -435,6 +435,13 @@ function enriquecerDatosReservaDesdeTexto(mensaje, sesion, datos = {}) {
       }
     }
   }
+  // Celular: número de teléfono enviado como respuesta directa
+  if (!enriquecidos.celular) {
+    const rawSinEspacios = raw.replace(/[\s\-]/g, "");
+    if (/^3\d{9}$/.test(rawSinEspacios)) {
+      enriquecidos.celular = rawSinEspacios;
+    }
+  }
   const plan = normalizarDecoracionLocal(raw);
   if (plan) { enriquecidos.decoracion = plan; enriquecidos.decoracionDecidida = true; }
   if (lower.includes("sin decoracion") || lower.includes("sin decoraci\u00f3n")) { enriquecidos.decoracion = null; enriquecidos.decoracionDecidida = true; }
@@ -602,6 +609,11 @@ async function manejarMensaje({ telefono, jid, mensaje }) {
   if (tipoDetectado === "reserva") {
     const datosFormulario = extraerFormularioReserva(textoPlano);
     datosExtraidos = { ...datosExtraidos, ...limpiarDatosExtraidos(datosFormulario) };
+    // Si la IA puso el teléfono en contacto, mapearlo a celular
+    if (datosExtraidos.contacto && !datosExtraidos.celular) {
+      datosExtraidos.celular = datosExtraidos.contacto;
+      delete datosExtraidos.contacto;
+    }
     datosExtraidos = enriquecerDatosReservaDesdeTexto(textoPlano, sesion, datosExtraidos);
   }
 
