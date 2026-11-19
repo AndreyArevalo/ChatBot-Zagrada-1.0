@@ -1,0 +1,85 @@
+# Pipeline CI/CD - Asistente virtual de reservas y domicilios Zagrada
+name: CI/CD Zagrada Chatbot
+
+on:
+  push:
+    branches: [main, "feature/**", "ci/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # 1. Construcción, análisis estático y pruebas
+  calidad-y-pruebas:
+    name: Build y pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Análisis estático (sintaxis)
+        run: npm run lint
+
+      - name: Pruebas unitarias
+        run: npm test
+
+      - name: Pruebas de integración (SQLite)
+        run: |
+          mkdir -p data
+          npm run test:integracion
+
+      - name: Auditoría de dependencias
+        run: npm audit --omit=dev --audit-level=critical
+        continue-on-error: true
+
+  # 2. Seguridad: búsqueda de credenciales en el historial
+  seguridad:
+    name: Escaneo de secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 3. Empaquetado en Docker
+  docker:
+    name: Construir imagen Docker
+    needs: [calidad-y-pruebas, seguridad]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir imagen
+        run: docker build -t zagrada-bot:${{ github.sha }} .
+
+      - name: Prueba de humo del contenedor
+        run: |
+          docker run --rm zagrada-bot:${{ github.sha }} \
+            node -e "require('./src/services/normalizadorFecha'); require('./src/validators/reserva'); console.log('Contenedor OK')"
+
+  # 4. Despliegue a staging (simulado), solo desde main
+  staging:
+    name: Despliegue a staging
+    needs: docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Desplegar (simulado)
+        run: |
+          echo "Desplegando zagrada-bot:${{ github.sha }} en staging..."
+          echo "En un servidor real: docker compose pull && docker compose up -d"
+          echo "Despliegue en staging completado"

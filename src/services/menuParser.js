@@ -64,11 +64,27 @@ const MENU_INDEXADO = MENU_ITEMS.map((item) => ({
   aliasesNormalizados: [item.nombre, ...(item.aliases || [])].map(normalizarTexto)
 }));
 
+// Si el texto nombra una categoría (ej. "hamburguesa"), solo se buscan
+// productos de esa categoría. Evita que "hamburguesa clasica" se tome
+// como "Michelada Clásica" por el alias "clasica".
+function categoriasMencionadas(textoNormalizado) {
+  const encontradas = [];
+  for (const cat of CATEGORIAS_AMBIGUAS) {
+    const menciona = cat.triggers.some(function(t) {
+      return new RegExp("\\b" + t + "\\b").test(textoNormalizado);
+    });
+    if (menciona) encontradas.push(...cat.categorias);
+  }
+  return encontradas;
+}
+
 function buscarItemMenu(segmento) {
   const segmentoNormalizado = normalizarTexto(segmento);
+  const categorias = categoriasMencionadas(segmentoNormalizado);
   let mejor = null;
   let mejorLongitud = 0;
   for (const item of MENU_INDEXADO) {
+    if (categorias.length && !categorias.includes(item.categoria)) continue;
     for (const alias of item.aliasesNormalizados) {
       if (segmentoNormalizado.includes(alias) && alias.length > mejorLongitud) {
         mejor = item;
